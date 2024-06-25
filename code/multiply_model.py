@@ -40,6 +40,7 @@ class MultiplyModel(pl.LightningModule):
         self.opt_smpl = True
         self.training_modules = ["model"]
         self.num_person = opt.dataset.train.num_person
+        self.validation_outputs = []
         if self.opt_smpl:
             self.body_model_list = torch.nn.ModuleList()
             for i in range(self.num_person):
@@ -138,26 +139,22 @@ class MultiplyModel(pl.LightningModule):
         is_pose_depth_opt = 'sam_mask' in inputs.keys() and self.current_epoch >= self.pose_start_epoch and pose_epoch < self.pose_opt_epoch and self.current_epoch < self.pose_end_epoch and not self.depth_end
         is_delayed_pose_opt = False
         cur_opt = None
-        opt_idx = 0
         if self.using_sam:
             is_certain = inputs["is_certain"].squeeze()
             is_delayed_pose_opt = self.current_epoch < self.pose_correction_epoch and not is_certain
             # optimze pose with inter-person pose loss within the loop
             if is_pose_depth_opt:
                 cur_opt = opt_pose
-                opt_idx = 1
-                self.toggle_optimizer(opt_pose, opt_idx)
+                self.toggle_optimizer(opt_pose)
             # optimize pose for frames with unreliable pose
             elif is_delayed_pose_opt:
-                cur_opt = opt_joint
-                opt_idx = 0
-                self.toggle_optimizer(opt_joint, opt_idx)
+                cur_opt = opt_joint                
+                self.toggle_optimizer(opt_joint)
                 self.freeze_shape_model()
             # jointly optimize pose and shape
             else:
                 cur_opt = opt_joint
-                opt_idx = 0
-                self.toggle_optimizer(opt_joint, opt_idx)
+                self.toggle_optimizer(opt_joint)
 
         device = inputs["smpl_params"].device
 
@@ -221,7 +218,6 @@ class MultiplyModel(pl.LightningModule):
             sch_joint.step()
             sch_pose.step()
 
-        self.untoggle_optimizer(opt_idx)
         self.unfreeze_shape_model()
 
         return loss_output["loss"]
@@ -482,11 +478,8 @@ class MultiplyModel(pl.LightningModule):
                 for k in loss_dict:
                     l_str += ', %s: %0.4f' % (k, loss_dict[k].mean().item())
                     loop.set_description(l_str)
-
-
-
-
-    def training_epoch_end(self, outputs) -> None:
+                    
+    def on_train_epoch_end(self) -> None:
         # Canonical mesh update every 20 epochs
         if self.current_epoch != 0 and self.current_epoch % 20 == 0:
             for person_id, smpl_server in enumerate(self.model.smpl_server_list):
@@ -516,7 +509,6 @@ class MultiplyModel(pl.LightningModule):
             torch.cuda.empty_cache()
             self.opt_depth()
             torch.cuda.empty_cache()
-        return super().training_epoch_end(outputs)
 
     def get_interpenetration_loss(self, vertex_list, face_list):
         num_pixels = 5120
@@ -982,6 +974,7 @@ class MultiplyModel(pl.LightningModule):
     def validation_step(self, batch, *args, **kwargs):
         outputs = []
         outputs.append(self.validation_step_single_person(batch, id=-1))
+        self.validation_outputs.append(output)
         if self.num_person > 1:
             for i in range(self.num_person):
                 outputs.append(self.validation_step_single_person(batch, id=i))
@@ -1121,14 +1114,18 @@ class MultiplyModel(pl.LightningModule):
         cv2.imwrite(f"normal/{self.current_epoch}_person{person_id}.png", normal[:, :, ::-1])
         cv2.imwrite(f"fg_rendering/{self.current_epoch}_person{person_id}.png", fg_rgb[:, :, ::-1])
 
-    def validation_epoch_end(self, outputs) -> None:
-        # import pdb; pdb.set_trace()
-        if self.num_person < 2:
-            self.validation_epoch_end_person([outputs[0][0]], person_id=-1)
-        else:
-            self.validation_epoch_end_person([outputs[0][0]], person_id=-1)
-            for i in range(self.num_person):
-                self.validation_epoch_end_person([outputs[0][i+1]], person_id=i)
+    def on_validation_epoch_end(self):
+        if len(self.validation_outputs) > 0:
+            outputs = self.validation_outputs
+            self.validation_outputs = []
+
+            if self.num_person < 2:
+                self.validation_epoch_end_person([outputs[0][0]], person_id=-1)
+            else:
+                self.validation_epoch_end_person([outputs[0][0]], person_id=-1)
+                for i in range(self.num_person):
+                    self.validation_epoch_end_person([outputs[0][i+1]], person_id=i)
+
     
     def test_step_mesh(self, batch, id=-1):
 
