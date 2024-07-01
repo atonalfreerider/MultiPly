@@ -386,20 +386,19 @@ def main(args):
                 smpl_verts = smpl_output.vertices.data.cpu().numpy().squeeze()
 
                 if args.mode == 'refine':
-                    openpose = np.load(openpose_paths[idx])
-                    if idx in interpolate_frame_list:
-                        openpose_j2d = 0
-                        openpose_conf = 0
-                    else:
-                        openpose_j2d = torch.tensor(openpose[person_i, :, :2][None], dtype=torch.float32,
-                                                    requires_grad=False, device=device)
-                        openpose_conf = torch.tensor(openpose[person_i, :, -1][None], dtype=torch.float32,
-                                                     requires_grad=False, device=device)
-                        keypoint_threshold = 0.6
-                        openpose_conf[0, openpose_conf[0, :] < keypoint_threshold] = 0.0
-
-                    
                     if args.openpose:
+                        openpose = np.load(openpose_paths[idx])
+                        if idx in interpolate_frame_list:
+                            openpose_j2d = 0
+                            openpose_conf = 0
+                        else:
+                            openpose_j2d = torch.tensor(openpose[person_i, :, :2][None], dtype=torch.float32,
+                                                        requires_grad=False, device=device)
+                            openpose_conf = torch.tensor(openpose[person_i, :, -1][None], dtype=torch.float32,
+                                                         requires_grad=False, device=device)
+                            keypoint_threshold = 0.6
+                            openpose_conf[0, openpose_conf[0, :] < keypoint_threshold] = 0.0
+
                         openpose_true = np.load(openpose_paths_true[idx])
                         if idx in interpolate_frame_list:
                             openpose_j2d_true = 0
@@ -470,7 +469,6 @@ def main(args):
                             break
                         else:
                             weight = 1
-                            loss['J2D_Loss'] = joints_2d_loss(openpose_j2d, smpl_joints_2d, openpose_conf, args.vitpose) * weight
                             if args.openpose:
                                 loss['J2D_Loss'] = loss['J2D_Loss'] + joints_2d_loss(openpose_j2d_true, smpl_joints_2d_openpose, openpose_conf_true) * weight
                             loss['Temporal_Loss'] = pose_temporal_loss(previous_pose_6d, current_pose_6d) * weight * 5 + pose_temporal_loss(previous_trans, opt_trans)
