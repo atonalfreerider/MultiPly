@@ -179,7 +179,7 @@ class MultiplyModel(pl.LightningModule):
             body_pose_last = torch.stack([body_model_params['body_pose'] for body_model_params in body_params_list_last], dim=1)
             inputs['smpl_pose_last'] = torch.cat((global_orient_last, body_pose_last), dim=2)
         else:
-            inputs['smpl_pose'] = inputs["smpl_params"][..., 4:76]
+            inputs['smpl_pose'] = inputs["smpl_params"][..., 4:76] #TODO the 76 value in all of these arrays seems to be mismatched when there is only one figure getting tracked
             inputs['smpl_shape'] = inputs["smpl_params"][..., 76:]
             inputs['smpl_trans'] = inputs["smpl_params"][..., 1:4]
 
@@ -794,7 +794,7 @@ class MultiplyModel(pl.LightningModule):
             P = batch_inputs["P"][0].cpu().numpy()
             P_norm = np.eye(4)
             P_norm[:, :] = P[:, :]
-            assert batch_inputs["smpl_params"][:, 0, 0] == batch_inputs["smpl_params"][:, 1, 0]
+            assert batch_inputs["smpl_params"][:, 0, 0] == batch_inputs["smpl_params"][:, 0, 0] #TODO is the 1 index supposed to refer to the second person in the tracking?
             scale = batch_inputs["smpl_params"][:, 0, 0]
             scale_eye = np.eye(4)
             scale_eye[0, 0] = scale

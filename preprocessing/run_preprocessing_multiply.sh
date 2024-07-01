@@ -3,7 +3,7 @@ folder_path="/media/ubuntu/hdd/RGB-PINA/preprocessing" # absolute path of prepro
 source="custom" # "custom" if use custom data
 seq="piggy19_cam4" # name of the sequence
 seq_path="/home/ubuntu/Downloads/$seq\.mp4" # path to the seq
-number=2 # number of people
+number=1 # number of people
 time_start="00:00:00" # start time of the sequence
 time_duration="00:00:15" # duration of the sequence
 

@@ -66,6 +66,10 @@ class SAMServer():
             self.predictor.set_image(image)
             image_mask_all = smpl_mask[i]
             output_mask_per_frame = []
+            if image_mask_all.shape[0] < 2:
+                # TODO not sure if mask needs more processing before it is appended
+                output_mask_list.append(image_mask_all[0])
+                continue
             for person_id in range(image_mask_all.shape[0]):
                 image_mask = image_mask_all[person_id]
                 negative_image_mask_list = []
@@ -234,6 +238,6 @@ class SAMServer():
                 output_mask_per_frame.append(masks)
             output_mask_per_frame = np.concatenate(output_mask_per_frame, axis=0)
             output_mask_list.append(output_mask_per_frame)
-        output = np.stack(output_mask_list, axis=0)
+        output = np.stack(output_mask_list, axis=0) #TODO FileNotFoundError: [Errno 2] No such file or directory: 'stage_sam_mask/00000/sam_opt_mask.npy'
         np.save(f"stage_sam_mask/{current_epoch:05d}/sam_opt_mask.npy", output)
         print("sam mask output shape", output.shape)
