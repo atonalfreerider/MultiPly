@@ -7,7 +7,7 @@ import os
 import glob
 from omegaconf import OmegaConf
 
-@hydra.main(config_path="confs", config_name="taichi01_base")
+@hydra.main(config_path="confs", config_name="carlos-aline")
 def main(opt):
     pl.seed_everything(42)
     print("Working dir:", os.getcwd())
@@ -20,7 +20,7 @@ def main(opt):
         every_n_epochs=100,
         save_top_k=-1,
         save_last=True)
-    logger = WandbLogger(project=opt.project_name, name=f"{opt.exp}/{opt.run}")
+    logger = WandbLogger(project=opt.project_name, name=f"{opt.exp}/{opt.run}", offline=True)
 
     trainer = pl.Trainer(
         # gpus=1,

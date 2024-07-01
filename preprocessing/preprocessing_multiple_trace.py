@@ -88,7 +88,7 @@ def main(args):
     device = torch.device("cuda:0")
     seq = args.seq
     DIR = './raw_data'
-    img_dir = f'{DIR}/{seq}/frames'   
+    img_dir = f'{DIR}/{seq}/frames'
     trace_file_dir = f'{DIR}/{seq}/trace'
     if args.source == 'hi4d':
         img_paths = sorted(glob.glob(f"{img_dir}/*.jpg"))
@@ -203,7 +203,7 @@ def main(args):
             smpl2op_mapping_openpose = torch.tensor(smpl_to_pose(model_type='smpl', use_hands=False, use_face=False,
                                             use_face_contour=False, openpose_format='coco25'), dtype=torch.long).cuda()
         
-        J_regressor_extra9 = np.load('./J_regressor_extra.npy')
+        J_regressor_extra9 = np.load('/home/john/Downloads/smpl_model_data/J_regressor_extra.npy')
         J_regressor_extra9 = torch.tensor(J_regressor_extra9, dtype=torch.float32).cuda()
     elif args.mode == 'final':
         refined_smpl_dir = f'{DIR}/{seq}/init_refined_smpl_files'

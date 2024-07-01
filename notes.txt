@@ -33,10 +33,9 @@ nan = np.nan
 inf = np.inf
 # Remove unicode as it is no longer needed
 
+for aitviewer:
+put simple models in
+data/smplx_models/smpl
 
 
-
-
-
-
-
+train.py only works from terminal, not from PyCharm

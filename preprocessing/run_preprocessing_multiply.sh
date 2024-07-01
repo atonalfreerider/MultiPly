@@ -1,32 +1,32 @@
 # parameter setup
-folder_path="/media/ubuntu/hdd/RGB-PINA/preprocessing" # absolute path of preprocessing folder
+folder_path="/home/john/Desktop/3D-Pose/MultiPly/preprocessing"
 source="custom" # "custom" if use custom data
-seq="piggy19_cam4" # name of the sequence
-seq_path="/home/ubuntu/Downloads/$seq\.mp4" # path to the seq
+seq="carlos-aline-cam1" # name of the sequence
+seq_path="/home/john/Downloads/$seq.mp4" # path to the seq
 number=2 # number of people
-time_start="00:00:00" # start time of the sequence
-time_duration="00:00:15" # duration of the sequence
+time_start="00:00:04" # start time of the sequence
+time_duration="00:00:30" # duration of the sequence
 
-source /media/ubuntu/hdd/anaconda3/etc/profile.d/conda.sh # load conda (find your conda path and replace it here)
+source /home/john/miniconda3/etc/profile.d/conda.sh # load conda (find your conda path and replace it here)
 # environment setup (can be same if you installed all the packages in the same environment, or different if you installed them in different environments)
-trace_env="smoothnet-env"
-vitpose_env="vitpose"
-aitviewer_env="aitviewer"
-multiply_env="v2a_global"
-cd $folder_path
+trace_env="trace3"
+vitpose_env="vitapose"
+aitviewer_env="multiply-update"
+multiply_env="multiply-update"
+cd $folder_path || exit
 
 # run ROMP to get initial SMPL parameters
 echo "Running Trace"
 conda activate $trace_env
 mkdir ./raw_data/$seq
 mkdir ./raw_data/$seq/$seq
-ffmpeg -i $seq_path -ss $time_start -t $time_duration -vsync 0 ./raw_data/$seq/$seq/%04d.png 
+ffmpeg -i $seq_path -ss $time_start -t $time_duration -vsync 0 ./raw_data/$seq/$seq/%04d.png
 
 # estimate the SMPL parameter and tracking with trace (for visualization use --show_tracking)
-trace2 -i $folder_path/raw_data/$seq/$seq  --subject_num=$number --results_save_dir=./trace_results/ --save_video --time2forget=40
+trace2 -i $folder_path/raw_data/$seq/$seq  --subject_num=$number --results_save_dir=./trace_results/ --save_video --time2forget=60 --center_thresh=0.3
 mv ./raw_data/$seq/$seq ./raw_data/$seq/frames
 
-echo "reformate the data"
+echo "reformat the data"
 conda activate $aitviewer_env
 python ../ait_viewer_vis/aitcamera.py --seq $seq --headless
 
@@ -59,4 +59,3 @@ echo "Normalizing cameras"
 python normalize_cameras_trace.py --input_cameras_file ../data/$seq/cameras.npz \
                             --output_cameras_file ../data/$seq/cameras_normalize.npz \
                             --max_human_sphere_file ../data/$seq/max_human_sphere.npy
-
